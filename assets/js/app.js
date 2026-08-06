@@ -30,6 +30,7 @@ function initApp() {
   window.printSelectedActivities = printSelectedActivities;
   window.createProfile = createProfile;
   window.changeProfile = changeProfile;
+  window.goHome = goHome;
 
   renderProfileSelector();
   loadActivities();
@@ -455,30 +456,39 @@ function printSelectedActivities() {
   <meta charset="utf-8">
   <title>Impression KidPrint</title>
   <style>
-    @page { size: A4 portrait; margin: 20mm; }
+    @page { size: A4 portrait; margin: 18mm; }
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #222; background: white; }
-    .page { width: 100%; box-sizing: border-box; padding: 0; }
-    h1 { margin: 0 0 16px 0; font-size: 24px; }
-    .print-card { border: 1px solid #ccc; border-radius: 12px; padding: 18px; margin-bottom: 18px; page-break-inside: avoid; }
-    .print-card header { margin-bottom: 12px; }
-    .print-card h2 { margin: 0 0 6px; font-size: 20px; }
-    .print-category { margin: 0; color: #555; font-size: 0.95rem; }
-    .print-image { width: 100%; max-height: 260px; object-fit: cover; border-radius: 10px; margin: 10px 0; }
-    .print-description { margin: 12px 0; line-height: 1.5; font-size: 1rem; }
-    .print-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.9rem; color: #333; }
-    .print-meta span { background: #f0f5ff; padding: 6px 10px; border-radius: 999px; }
+    .page { width: 100%; min-height: 100vh; box-sizing: border-box; padding: 16mm 18mm 20mm; display: flex; flex-direction: column; justify-content: flex-start; }
+    .page:not(:last-child) { page-break-after: always; }
+    .cover { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 0.8rem; }
+    .cover h1 { margin: 0; font-size: 42px; color: #2169d2; }
+    .cover p { margin: 0; font-size: 18px; color: #444; }
+    .activity-card { border: 2px solid #e2e8f0; border-radius: 18px; padding: 18px; margin-top: 12mm; display: flex; flex-direction: column; gap: 14px; }
+    .activity-card header { display: flex; flex-direction: column; gap: 8px; }
+    .activity-card h2 { margin: 0; font-size: 30px; color: #1f2937; }
+    .activity-info { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.95rem; color: #475569; }
+    .activity-info span { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; padding: 8px 12px; }
+    .activity-body { display: grid; gap: 12px; }
+    .activity-description { font-size: 1rem; line-height: 1.65; color: #334155; }
+    .activity-image { width: 100%; max-height: 260px; object-fit: cover; border-radius: 14px; }
+    .activity-metadata { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.95rem; color: #334155; }
+    .activity-metadata span { background: #eff6ff; border-radius: 999px; padding: 8px 12px; }
+    .page-footer { margin-top: auto; font-size: 0.9rem; color: #64748b; }
     @media print {
       body { margin: 0; }
-      .print-card { box-shadow: none; border-color: #aaa; }
-      .print-image { max-height: 240px; }
+      .page { padding: 12mm 16mm; }
+      .activity-card { border-color: #cbd5e1; }
+      .activity-image { max-height: 220px; }
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <h1>Activités à imprimer</h1>
-    ${content}
+  <div class="page cover">
+    <h1>KidPrint</h1>
+    <p>Activités imprimables sélectionnées</p>
+    <p>Nombre d’activités : ${selectedItems.length}</p>
   </div>
+  ${content}
 </body>
 </html>`;
 
@@ -492,6 +502,23 @@ function toggleFavOnly() {
   favOnly = !favOnly;
   document.body.classList.toggle('fav-only', favOnly);
   renderGrid();
+}
+
+function goHome() {
+  const queryInput = document.getElementById('aiQuery');
+  if (queryInput) queryInput.value = '';
+
+  const ageFilter = document.getElementById('ageFilter');
+  const categoryFilter = document.getElementById('categoryFilter');
+  if (ageFilter) ageFilter.value = 'all';
+  if (categoryFilter) categoryFilter.value = 'all';
+
+  favOnly = false;
+  document.body.classList.remove('fav-only');
+  searchResultIds = [];
+  hideWebResults();
+  renderGrid();
+  showResponse('Accueil réinitialisé. Commence une nouvelle recherche.', 'success');
 }
 
 function showResponse(message, type = 'info') {
@@ -535,24 +562,21 @@ async function runAIAssistant() {
       ? data.recommendedActivities
       : localSearch(query);
 
-    if (data.createdActivity) {
-      addCustomActivity(data.createdActivity);
-    }
-
-      if (Array.isArray(data.webResults) && data.webResults.length > 0) {
-      showWebResults(data.webResults);
-    } else {
-      hideWebResults();
-    }
-
     const actualResults = [
       ...results,
-      ...(Array.isArray(data.webActivities) ? data.webActivities : [])
+      ...(Array.isArray(data.webActivities) ? data.webActivities : []),
+      ...(data.createdActivity ? [data.createdActivity] : [])
     ];
 
     actualResults.forEach((activity) => {
       addCustomActivity(activity);
     });
+
+    if (Array.isArray(data.webResults) && data.webResults.length > 0 && actualResults.length === 0) {
+      showWebResults(data.webResults);
+    } else {
+      hideWebResults();
+    }
 
     const uniqueItemIds = Array.from(new Set(actualResults.map((item) => item.id)));
     searchResultIds = uniqueItemIds;
