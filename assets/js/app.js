@@ -31,6 +31,7 @@ function initApp() {
   window.createProfile = createProfile;
   window.changeProfile = changeProfile;
   window.goHome = goHome;
+  window.selectDailyActivity = selectDailyActivity;
 
   renderProfileSelector();
   loadActivities();
@@ -226,6 +227,18 @@ function getDailyActivity() {
   return items[index];
 }
 
+function selectDailyActivity() {
+  const daily = getDailyActivity();
+  if (!daily) return;
+  if (!selectedIds.includes(daily.id)) {
+    selectedIds.push(daily.id);
+    saveSelectedItems();
+  }
+  searchResultIds = [daily.id];
+  renderGrid();
+  showResponse(`Activité du jour sélectionnée : ${daily.title}`, 'success');
+}
+
 function renderDailyActivity() {
   const container = document.getElementById('dailyActivity');
   if (!container) return;
@@ -236,13 +249,18 @@ function renderDailyActivity() {
   }
   container.style.display = 'block';
   container.innerHTML = `
-    <h3>✨ Activité du jour pour ${currentProfile?.name || 'le profil'}</h3>
-    <p><strong>${daily.title}</strong></p>
-    <p>${daily.desc || 'Une activité sympa à imprimer avec ton enfant.'}</p>
-    <div class="daily-meta">
-      <span>${daily.category || 'Activité'}</span>
-      <span>${daily.age || 'Tous âges'}</span>
-    </div>
+    <button class="daily-card" type="button" onclick="selectDailyActivity()">
+      <div>
+        <h3>✨ Activité du jour pour ${currentProfile?.name || 'le profil'}</h3>
+        <p><strong>${daily.title}</strong></p>
+        <p>${daily.desc || 'Une activité sympa à imprimer avec ton enfant.'}</p>
+        <div class="daily-meta">
+          <span>${daily.category || 'Activité'}</span>
+          <span>${daily.age || 'Tous âges'}</span>
+        </div>
+      </div>
+      <span class="daily-action">Voir</span>
+    </button>
   `;
 }
 
