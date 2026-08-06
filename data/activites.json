@@ -8,7 +8,7 @@ async function loadData() {
   const grid = document.getElementById('contentGrid');
   grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1 / -1;">Chargement...</p>';
   try {
-    const response = await fetch('/data/activites.json');
+    const response = await fetch('./data/activites.json');
     items = await response.json();
     renderGrid();
   } catch (error) {
