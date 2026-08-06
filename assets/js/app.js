@@ -141,15 +141,6 @@ function changeProfile(profileId) {
   setCurrentProfile(profileId);
 }
 
-function createProfile() {
-  const name = prompt('Nom du nouveau profil :');
-  if (!name || !name.trim()) return;
-  const profile = { id: `profile_${Date.now()}`, name: name.trim() };
-  profiles.push(profile);
-  saveProfiles();
-  setCurrentProfile(profile.id);
-}
-
 function renderProfileSelector() {
   const container = document.getElementById('profileSelector');
   if (!container) return;
@@ -161,6 +152,71 @@ function renderProfileSelector() {
     <button class="btn-outline" type="button" onclick="createProfile()">Nouveau profil</button>
   `;
 }
+
+function openModal({ title, body, confirmText = 'OK', cancelText = 'Annuler', onConfirm }) {
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  if (!overlay || !content) return;
+
+  content.innerHTML = `
+    <h2 id="modalTitle">${title}</h2>
+    <div class="modal-body">${body}</div>
+    <div class="modal-actions">
+      <button class="btn" type="button" id="modalConfirm">${confirmText}</button>
+      <button class="btn-outline" type="button" id="modalCancel">${cancelText}</button>
+    </div>
+  `;
+
+  overlay.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+
+  const confirmBtn = document.getElementById('modalConfirm');
+  const cancelBtn = document.getElementById('modalCancel');
+
+  cancelBtn?.addEventListener('click', closeModal);
+  confirmBtn?.addEventListener('click', () => {
+    const result = typeof onConfirm === 'function' ? onConfirm() : true;
+    if (result !== false) closeModal();
+  });
+}
+
+function closeModal() {
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  if (!overlay || !content) return;
+  overlay.classList.add('hidden');
+  content.innerHTML = '';
+  document.body.classList.remove('modal-open');
+}
+
+function openCreateProfileModal() {
+  openModal({
+    title: 'Nouveau profil',
+    body: `
+      <label for="newProfileName">Nom du profil</label>
+      <input id="newProfileName" type="text" placeholder="Ex. Emma, Lucas" />
+    `,
+    confirmText: 'Créer',
+    cancelText: 'Annuler',
+    onConfirm: () => {
+      const input = document.getElementById('newProfileName');
+      const name = input?.value?.trim();
+      if (!name) {
+        showResponse('Donne un nom à ton profil.', 'info');
+        return false;
+      }
+      const profile = { id: `profile_${Date.now()}`, name };
+      profiles.push(profile);
+      saveProfiles();
+      setCurrentProfile(profile.id);
+    }
+  });
+}
+
+function createProfile() {
+  openCreateProfileModal();
+}
+
 
 function getDailyActivity() {
   if (items.length === 0) return null;
@@ -733,25 +789,59 @@ function createFallbackActivity(query, source) {
 }
 
 function openManualAddModal() {
-  const title = prompt('Titre de l’activité :');
-  if (!title) return;
-  const category = prompt('Catégorie :', 'Coloriage');
-  const age = prompt('Âge (3-5, 6-8, 9-12) :', '6-8');
-  const desc = prompt('Description :', '');
-  const imageUrl = prompt('URL de l’image (optionnel) :', '');
+  openModal({
+    title: 'Ajouter une activité manuellement',
+    body: `
+      <label for="manualTitle">Titre</label>
+      <input id="manualTitle" type="text" placeholder="Ex. Labyrinthe arc-en-ciel" />
+      <label for="manualCategory">Catégorie</label>
+      <select id="manualCategory">
+        <option value="Coloriage">Coloriage</option>
+        <option value="Mots Fléchés">Mots Fléchés</option>
+        <option value="Labyrinthe">Labyrinthe</option>
+        <option value="Exercice">Exercice</option>
+        <option value="Créativité">Créativité</option>
+      </select>
+      <label for="manualAge">Âge</label>
+      <select id="manualAge">
+        <option value="3-5">3 - 5 ans</option>
+        <option value="6-8" selected>6 - 8 ans</option>
+        <option value="9-12">9 - 12 ans</option>
+      </select>
+      <label for="manualDesc">Description</label>
+      <textarea id="manualDesc" placeholder="Décris l’activité..."></textarea>
+      <label for="manualImageUrl">URL d’image (optionnel)</label>
+      <input id="manualImageUrl" type="url" placeholder="https://..." />
+    `,
+    confirmText: 'Ajouter',
+    cancelText: 'Annuler',
+    onConfirm: () => {
+      const title = document.getElementById('manualTitle')?.value?.trim();
+      const category = document.getElementById('manualCategory')?.value || 'Coloriage';
+      const age = document.getElementById('manualAge')?.value || '6-8';
+      const desc = document.getElementById('manualDesc')?.value?.trim() || '';
+      const imageUrl = document.getElementById('manualImageUrl')?.value?.trim() || '';
 
-  const newItem = {
-    id: Date.now(),
-    title,
-    category,
-    age,
-    icon: '🎨',
-    imageUrl: imageUrl || '',
-    desc
-  };
+      if (!title) {
+        showResponse('Le titre est requis pour ajouter une activité.', 'info');
+        return false;
+      }
 
-  addCustomActivity(newItem);
-  toggleSelection(newItem.id);
-  searchResultIds = [newItem.id];
-  renderGrid();
+      const newItem = {
+        id: Date.now(),
+        title,
+        category,
+        age,
+        icon: '🎨',
+        imageUrl,
+        desc
+      };
+
+      addCustomActivity(newItem);
+      toggleSelection(newItem.id);
+      searchResultIds = [newItem.id];
+      renderGrid();
+      showResponse('Activité ajoutée au profil.', 'success');
+    }
+  });
 }

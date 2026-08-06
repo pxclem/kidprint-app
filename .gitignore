@@ -1,10 +1,16 @@
-<<<<<<< HEAD
-
 # Local Netlify folder
-.netlify
-=======
 .netlify/
+
+# dependencies
 node_modules/
+
+# system files
 .DS_Store
 Thumbs.db
->>>>>>> a61c19443d41c1d020ed8955ff55e35f67d0262c
+
+# local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
