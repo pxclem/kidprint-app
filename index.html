@@ -9,21 +9,26 @@
 <body>
   <header>
     <h1>KidPrint IA</h1>
-    <p>Plateforme intelligente d'activités & jeux imprimables</p>
+    <p>Une plateforme intelligente pour trouver, ajouter et imprimer des activités pour enfants.</p>
   </header>
 
   <div class="container">
-    <!-- Assistant IA -->
     <section class="ai-box">
-      <h2>🤖 Assistant IA Pédagogique</h2>
+      <h2>🤖 Recherche IA pour enfant</h2>
+      <p class="ai-help">Décris ce que cherche ton enfant : âge, thème, niveau ou type d’activité.</p>
       <div class="ai-input-group">
-        <input type="text" id="aiQuery" placeholder="Ex. : Fiche facile pour mon enfant de 6 ans...">
-        <button class="btn" onclick="runAIAssistant()">Demander à l'IA</button>
+        <input type="text" id="aiQuery" placeholder="Ex. : activité de coloriage pour un enfant de 5 ans qui aime les dinosaures">
+        <button class="btn" onclick="runAIAssistant()">Chercher & ajouter</button>
       </div>
-      <div id="aiResponse" style="margin-top: 1rem; font-style: italic; color: #555; display: none;"></div>
+      <div class="ai-actions">
+        <button class="btn-outline" onclick="randomSuggestion()">Suggestion IA</button>
+        <button class="btn-outline" onclick="clearSearch()">Effacer la recherche</button>
+      </div>
+      <div id="searchHistory" class="search-history"></div>
+      <div id="aiResponse" class="status-message" style="display: none;"></div>
+      <div id="webResults" class="web-results" style="display: none;"></div>
     </section>
 
-    <!-- Filtres de tri -->
     <section class="filters">
       <div class="filter-group">
         <label for="ageFilter"><b>Âge :</b></label>
@@ -42,6 +47,7 @@
           <option value="Mots Fléchés">Mots Fléchés</option>
           <option value="Labyrinthe">Labyrinthes</option>
           <option value="Exercice">Exercices</option>
+          <option value="Créativité">Créativité</option>
         </select>
       </div>
       <button class="btn btn-secondary" style="margin-left: auto;" onclick="toggleFavOnly()">
@@ -49,9 +55,19 @@
       </button>
     </section>
 
-    <!-- Grille de contenus -->
+    <section class="import-box">
+      <h3>🛠️ Importation IA & enrichissement</h3>
+      <div class="import-group">
+        <input type="text" id="importUrlInput" placeholder="Coller une URL web ou décrire une recherche à importer, ex. : https://site.com/activite-pdf">
+        <button class="btn" onclick="importFromWeb()">Analyser & importer</button>
+        <button class="btn-outline" onclick="openManualAddModal()">➕ Ajouter manuellement</button>
+      </div>
+    </section>
+
     <main class="grid" id="contentGrid"></main>
   </div>
+
+  <div id="bundle-bar"></div>
 
   <script src="./assets/js/app.js"></script>
 </body>

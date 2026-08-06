@@ -14,10 +14,11 @@ header { background: linear-gradient(135deg, var(--primary), var(--accent)); col
 .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 
 /* AI Box & Filters */
-.ai-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid var(--accent); }
-.ai-box h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 0.8rem; }
+.ai-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid var(--accent); }
+.ai-box h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 0.4rem; }
+.ai-help { color: #5f6b7a; margin-bottom: 0.8rem; }
 .ai-input-group { display: flex; gap: 10px; flex-wrap: wrap; }
-.ai-input-group input { flex: 1; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; min-width: 200px;}
+.ai-input-group input, .import-group input { flex: 1; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; min-width: 220px; }
 .btn { background: var(--primary); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
 .btn:hover { opacity: 0.9; }
 .btn-secondary { background: var(--secondary); }
@@ -26,14 +27,37 @@ header { background: linear-gradient(135deg, var(--primary), var(--accent)); col
 .filter-group { display: flex; align-items: center; gap: 0.5rem; }
 select { padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc; }
 
+.import-box { background: white; border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.import-box h3 { color: var(--primary); margin-bottom: 0.8rem; }
+.import-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.status-message { margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 8px; background: #f3f7ff; color: #35527a; }
+.status-message.success { background: #eefbf1; color: #2d6a3a; }
+.status-message.loading { background: #fff8e8; color: #8a5a00; }
+.web-results { margin-top: 1rem; padding: 1rem; border-radius: 8px; background: #f9fbff; border: 1px solid #dce7f3; }
+.web-results h3 { margin-bottom: 0.6rem; color: var(--primary); }
+.web-results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.web-card { background: white; border-radius: 12px; border: 1px solid #dce7f3; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; }
+.web-card h4 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+.web-card p { color: #5f6b7a; font-size: 0.95rem; line-height: 1.4; margin-bottom: 1rem; }
+.web-card a { color: var(--primary); font-weight: 700; text-decoration: none; }
+.web-card a:hover { text-decoration: underline; }
+.search-history { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.history-label { width: 100%; color: #5f6b7a; margin-bottom: 0.4rem; }
+.history-chip { border: 1px solid #c9d7ed; background: white; color: var(--text); border-radius: 999px; padding: 0.45rem 0.85rem; cursor: pointer; transition: 0.15s; }
+.history-chip:hover { background: var(--accent); color: white; border-color: var(--accent); }
+.ai-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.8rem; }
+
 /* Grid & Cards */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
 .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
 .card:hover { transform: translateY(-4px); }
 .card-img { height: 160px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
 .card-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-.card-tags { display: flex; gap: 5px; margin-top: 0.5rem; }
+.meta-line { font-size: 0.9rem; color: #5f6b7a; margin-top: 0.35rem; }
+.card-tags { display: flex; gap: 5px; margin-top: 0.5rem; flex-wrap: wrap; }
 .tag { font-size: 0.75rem; background: #EBF3FA; color: var(--primary); padding: 3px 8px; border-radius: 12px; }
+.card-actions { margin-top: 0.8rem; }
+.btn-small { background: var(--accent); color: white; border: none; padding: 0.5rem 0.8rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
 
 /* Buttons */
 .fav-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.2rem; }

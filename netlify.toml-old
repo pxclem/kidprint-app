@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Redirection optionnelle pour forcer le HTTPS
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

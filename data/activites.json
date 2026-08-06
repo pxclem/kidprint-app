@@ -1,0 +1,14 @@
+[
+  { "id": 1, "title": "Labyrinthe Spatial", "category": "Labyrinthe", "age": "6-8", "icon": "🚀", "desc": "Aide l'astronaute à retrouver sa fusée." },
+  { "id": 2, "title": "Mots Fléchés Animaux", "category": "Mots Fléchés", "age": "6-8", "icon": "🦁", "desc": "Grille niveau 1 pour découvrir les animaux." },
+  { "id": 3, "title": "Coloriage Dinosaure", "category": "Coloriage", "age": "3-5", "icon": "🦕", "desc": "Un grand T-Rex à colorier avec des formes simples." },
+  { "id": 4, "title": "Calculs Magiques", "category": "Exercice", "age": "6-8", "icon": "🔢", "desc": "Additionne pour découvrir la couleur cachée." },
+  { "id": 5, "title": "Mission Co-op", "category": "Exercice", "age": "9-12", "icon": "🤝", "desc": "Un puzzle logique à résoudre à deux." },
+  { "id": 6, "title": "Énigmes de la Nature", "category": "Exercice", "age": "6-8", "icon": "🌿", "desc": "Repère les plantes, les insectes et les saisons." },
+  { "id": 7, "title": "Labyrinthe des Petits Explorateurs", "category": "Labyrinthe", "age": "3-5", "icon": "🧭", "desc": "Aide le petit héros à retrouver la sortie." },
+  { "id": 8, "title": "Chasse aux Lettres", "category": "Mots Fléchés", "age": "3-5", "icon": "🔤", "desc": "Repère les lettres de ton prénom dans la grille." },
+  { "id": 9, "title": "Dessin de la Lune", "category": "Coloriage", "age": "6-8", "icon": "🌙", "desc": "Un dessin simple et apaisant à colorier." },
+  { "id": 10, "title": "Création d'Origami", "category": "Créativité", "age": "6-8", "icon": "📄", "desc": "Fabrique un petit bateau et apprends les gestes simples." },
+  { "id": 11, "title": "Planète des Nombres", "category": "Exercice", "age": "9-12", "icon": "🪐", "desc": "Un jeu de logique et de calcul pour les grands." },
+  { "id": 12, "title": "Jeu de Paires d'Animaux", "category": "Exercice", "age": "3-5", "icon": "🐰", "desc": "Associe les paires et stimule la mémoire visuelle." }
+]
