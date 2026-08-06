@@ -1,0 +1,11 @@
+{
+  "name": "kidprint-app",
+  "version": "1.0.0",
+  "description": "Application KidPrint pour activités enfants imprimables.",
+  "private": true,
+  "scripts": {
+    "start": "npx serve . -l 8888",
+    "dev": "npx serve . -l 8888",
+    "test": "node --test tests/assistant.test.js"
+  }
+}
