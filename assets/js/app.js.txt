@@ -1,0 +1,214 @@
+let items = [];
+let favorites = JSON.parse(localStorage.getItem('fav_items')) || [];
+let bundleSelection = [];
+let showFavOnly = false;
+
+// Chargement des données
+async function loadData() {
+  const grid = document.getElementById('contentGrid');
+  grid.innerHTML = '<p style="text-align:center; width:100%; grid-column: 1 / -1;">Chargement...</p>';
+  try {
+    const response = await fetch('./data/activites.json');
+    items = await response.json();
+    renderGrid();
+  } catch (error) {
+    grid.innerHTML = '<p style="color:red; text-align:center; grid-column: 1 / -1;">Erreur de chargement des activités.</p>';
+  }
+}
+
+// Affichage
+function renderGrid(filteredList = null) {
+  const grid = document.getElementById('contentGrid');
+  const age = document.getElementById('ageFilter').value;
+  const cat = document.getElementById('categoryFilter').value;
+
+  let list = filteredList || items.filter(item => {
+    return (age === 'all' || item.age === age) && 
+           (cat === 'all' || item.category === cat) && 
+           (!showFavOnly || favorites.includes(item.id));
+  });
+
+  if (list.length === 0) {
+    grid.innerHTML = '<p style="text-align:center; grid-column: 1 / -1;">Aucune activité trouvée.</p>';
+    return;
+  }
+
+  grid.innerHTML = list.map(item => {
+    const isFav = favorites.includes(item.id);
+    const isInBundle = bundleSelection.includes(item.id);
+    return `
+      <article class="card">
+        <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(${item.id})">${isFav ? '❤️' : '🤍'}</button>
+        <div class="card-img">${item.icon}</div>
+        <div class="card-body">
+          <div>
+            <h3>${item.title}</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 5px;">${item.desc}</p>
+            <div class="card-tags">
+              <span class="tag">${item.age} ans</span>
+              <span class="tag">${item.category}</span>
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <button class="btn" style="width: 100%; margin-bottom: 0.5rem;" onclick="printSingle(${item.id})">🖨️ Imprimer seule</button>
+            <button class="btn-outline ${isInBundle ? 'selected' : ''}" onclick="toggleBundle(${item.id})">
+              ${isInBundle ? '✅ Au cahier' : '➕ Ajouter au cahier'}
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+  document.getElementById('favCount').innerText = favorites.length;
+}
+
+// Favoris et Filtres
+function toggleFav(id) {
+  favorites = favorites.includes(id) ? favorites.filter(f => f !== id) : [...favorites, id];
+  localStorage.setItem('fav_items', JSON.stringify(favorites));
+  renderGrid();
+}
+function toggleFavOnly() { showFavOnly = !showFavOnly; renderGrid(); }
+
+// Assistant IA connecté à Netlify Function
+async function runAIAssistant() {
+  const query = document.getElementById('aiQuery').value;
+  const respBox = document.getElementById('aiResponse');
+  if (!query) return;
+
+  respBox.style.display = 'block';
+  respBox.innerText = "L'assistant IA réfléchit...";
+
+  try {
+    const res = await fetch('/.netlify/functions/assistant', {
+      method: 'POST',
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    
+    if (data.recommendedIds) {
+      respBox.innerText = `💡 ${data.message}`;
+      renderGrid(items.filter(i => data.recommendedIds.includes(i.id)));
+    }
+  } catch (err) {
+    respBox.innerText = "❌ L'assistant IA n'est pas disponible (fonctionne uniquement sur Netlify ou avec netlify-cli).";
+  }
+}
+
+// Cahier PDF
+function toggleBundle(id) {
+  if (bundleSelection.includes(id)) {
+    bundleSelection = bundleSelection.filter(b => b !== id);
+  } else if (bundleSelection.length < 10) {
+    bundleSelection.push(id);
+  } else {
+    alert("Max 10 activités !");
+  }
+  updateBundleBar();
+  renderGrid();
+}
+
+function updateBundleBar() {
+  let bar = document.getElementById('bundle-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'bundle-bar';
+    document.body.appendChild(bar);
+  }
+  if (bundleSelection.length > 0) {
+    bar.innerHTML = `
+      <div><h3 style="margin:0;">📚 Cahier (${bundleSelection.length})</h3></div>
+      <button class="btn-bundle" onclick="generatePDFBundle()">Générer A4</button>
+    `;
+    setTimeout(() => bar.classList.add('visible'), 10);
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+// Injection des styles A4 parfaits
+const getA4Styles = () => `
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #fff; width: 210mm; }
+    .page { 
+      width: 210mm; 
+      height: 297mm; /* Format A4 strict */
+      padding: 15mm; 
+      page-break-after: always; 
+      display: flex; 
+      flex-direction: column; 
+    }
+    .page:last-child { page-break-after: auto; }
+    .header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 5mm; margin-bottom: 10mm; font-size: 14pt; }
+    .title { text-align: center; font-size: 24pt; color: #333; margin-bottom: 15mm; }
+    .content-box { flex: 1; border: 3px dashed #ccc; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 100pt; margin-bottom: 10mm; }
+    .desc { font-size: 16pt; text-align: center; color: #555; }
+    
+    .cover { justify-content: center; align-items: center; text-align: center; border: 10mm solid #4A90E2; padding: 20mm; }
+    .cover h1 { font-size: 40pt; color: #4A90E2; }
+    .cover h2 { font-size: 24pt; color: #333; }
+  </style>
+`;
+
+function printSingle(id) {
+  const item = items.find(i => i.id === id);
+  const printWindow = window.open('', '', 'width=800,height=600');
+  const date = new Date().toLocaleDateString('fr-FR');
+  
+  printWindow.document.write(`
+    <html><head><title>Impression - ${item.title}</title>${getA4Styles()}</head><body>
+      <div class="page">
+        <div class="header"><span>Prénom : _________</span><span>Date : ${date}</span></div>
+        <h1 class="title">${item.title}</h1>
+        <div class="content-box">${item.icon}</div>
+        <p class="desc">${item.desc}</p>
+      </div>
+    </body></html>
+  `);
+  printWindow.document.close();
+  setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+}
+
+function generatePDFBundle() {
+  const childName = prompt("Prénom de l'enfant pour la couverture ?", "Prénom");
+  if (!childName) return;
+
+  const selectedItems = items.filter(i => bundleSelection.includes(i.id));
+  const date = new Date().toLocaleDateString('fr-FR');
+  const printWindow = window.open('', '', 'width=800,height=600');
+
+  let htmlContent = `<html><head><title>Cahier - ${childName}</title>${getA4Styles()}</head><body>`;
+  
+  htmlContent += `
+    <div class="page cover">
+      <h1>Mon Super Cahier</h1>
+      <h2>Activités & Jeux</h2>
+      <p style="font-size: 20pt; margin-top: 30mm;">À : <strong>${childName}</strong></p>
+    </div>
+  `;
+
+  selectedItems.forEach(item => {
+    htmlContent += `
+      <div class="page">
+        <div class="header"><span>Prénom : ${childName}</span><span>Date : ${date}</span></div>
+        <h1 class="title">${item.title}</h1>
+        <div class="content-box">${item.icon}</div>
+        <p class="desc">${item.desc}</p>
+      </div>
+    `;
+  });
+
+  htmlContent += `</body></html>`;
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+  
+  setTimeout(() => { 
+    printWindow.print(); 
+    printWindow.close(); 
+    bundleSelection = []; updateBundleBar(); renderGrid(); 
+  }, 500);
+}
+
+loadData();

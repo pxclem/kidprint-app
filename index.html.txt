@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KidPrint - Activités & Jeux à imprimer</title>
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+  <header>
+    <h1>KidPrint IA</h1>
+    <p>Plateforme intelligente d'activités & jeux imprimables</p>
+  </header>
+
+  <div class="container">
+    <!-- Assistant IA -->
+    <section class="ai-box">
+      <h2>🤖 Assistant IA Pédagogique</h2>
+      <div class="ai-input-group">
+        <input type="text" id="aiQuery" placeholder="Ex. : Fiche facile pour mon enfant de 6 ans...">
+        <button class="btn" onclick="runAIAssistant()">Demander à l'IA</button>
+      </div>
+      <div id="aiResponse" style="margin-top: 1rem; font-style: italic; color: #555; display: none;"></div>
+    </section>
+
+    <!-- Filtres de tri -->
+    <section class="filters">
+      <div class="filter-group">
+        <label for="ageFilter"><b>Âge :</b></label>
+        <select id="ageFilter" onchange="renderGrid()">
+          <option value="all">Tous les âges</option>
+          <option value="3-5">3 - 5 ans</option>
+          <option value="6-8">6 - 8 ans</option>
+          <option value="9-12">9 - 12 ans</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="categoryFilter"><b>Genre :</b></label>
+        <select id="categoryFilter" onchange="renderGrid()">
+          <option value="all">Toutes les catégories</option>
+          <option value="Coloriage">Coloriages</option>
+          <option value="Mots Fléchés">Mots Fléchés</option>
+          <option value="Labyrinthe">Labyrinthes</option>
+          <option value="Exercice">Exercices</option>
+        </select>
+      </div>
+      <button class="btn btn-secondary" style="margin-left: auto;" onclick="toggleFavOnly()">
+        ❤️ Mes Favoris (<span id="favCount">0</span>)
+      </button>
+    </section>
+
+    <!-- Grille de contenus -->
+    <main class="grid" id="contentGrid"></main>
+  </div>
+
+  <script src="./assets/js/app.js"></script>
+</body>
+</html>
