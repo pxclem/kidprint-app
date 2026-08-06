@@ -132,6 +132,8 @@ function setCurrentProfile(profileId) {
   localStorage.setItem(STORAGE_KEYS.currentProfile, profileId);
   loadState();
   renderProfileSelector();
+  renderDailyActivity();
+  renderSearchHistory();
   renderGrid();
 }
 
@@ -157,6 +159,33 @@ function renderProfileSelector() {
       ${profiles.map((profile) => `<option value="${profile.id}" ${profile.id === currentProfile?.id ? 'selected' : ''}>${profile.name}</option>`).join('')}
     </select>
     <button class="btn-outline" type="button" onclick="createProfile()">Nouveau profil</button>
+  `;
+}
+
+function getDailyActivity() {
+  if (items.length === 0) return null;
+  const seed = new Date().getDate() + new Date().getMonth();
+  const index = seed % items.length;
+  return items[index];
+}
+
+function renderDailyActivity() {
+  const container = document.getElementById('dailyActivity');
+  if (!container) return;
+  const daily = getDailyActivity();
+  if (!daily) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'block';
+  container.innerHTML = `
+    <h3>✨ Activité du jour pour ${currentProfile?.name || 'le profil'}</h3>
+    <p><strong>${daily.title}</strong></p>
+    <p>${daily.desc || 'Une activité sympa à imprimer avec ton enfant.'}</p>
+    <div class="daily-meta">
+      <span>${daily.category || 'Activité'}</span>
+      <span>${daily.age || 'Tous âges'}</span>
+    </div>
   `;
 }
 
@@ -214,6 +243,7 @@ async function loadActivities() {
 
   items = [...items, ...customItems];
   renderSearchHistory();
+  renderDailyActivity();
   renderGrid();
 }
 
