@@ -16,6 +16,9 @@ let searchResultIds = [];
 let favOnly = false;
 let profiles = [];
 let currentProfile = null;
+let currentPage = 1;
+const pageSize = 10;
+const maxPages = 10; // maximum pages to display (10 pages * 10 items = 100 results)
 
 function initApp() {
   loadProfiles();
@@ -47,6 +50,18 @@ function bindEvents() {
         runAIAssistant();
       }
     });
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeout = 3000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -234,6 +249,7 @@ function selectDailyActivity() {
     selectedIds.push(daily.id);
     saveSelectedItems();
   }
+  currentPage = 1;
   searchResultIds = [daily.id];
   renderGrid();
   showResponse(`Activité du jour sélectionnée : ${daily.title}`, 'success');
@@ -319,7 +335,7 @@ async function loadActivities() {
   items = [...items, ...customItems];
   renderSearchHistory();
   renderDailyActivity();
-  renderGrid();
+  requestAnimationFrame(renderGrid);
 }
 
 function renderGrid() {
@@ -347,22 +363,73 @@ function renderGrid() {
     visibleItems = visibleItems.filter((item) => favorites.includes(item.id));
   }
 
-  if (visibleItems.length === 0) {
+  const limitedItems = visibleItems.slice(0, pageSize * maxPages);
+  const totalPages = Math.max(1, Math.min(maxPages, Math.ceil(limitedItems.length / pageSize)));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const pagedItems = limitedItems.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  if (limitedItems.length === 0) {
     grid.innerHTML = '<div class="empty-state">Aucune activité ne correspond à ce filtre pour l’instant.</div>';
+    renderPagination(0);
     updateBundleBar();
     return;
   }
 
-  grid.innerHTML = visibleItems.map((item) => buildCardMarkup(item)).join('');
+  grid.innerHTML = pagedItems.map((item) => buildCardMarkup(item)).join('');
+  renderPagination(totalPages);
   updateFavoriteCount();
   updateBundleBar();
+}
+
+function renderPagination(totalPages) {
+  const pagination = document.getElementById('paginationControls');
+  if (!pagination) return;
+
+  if (totalPages <= 1) {
+    pagination.innerHTML = '';
+    return;
+  }
+
+  const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+  const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+
+  const pageButtons = Array.from({ length: totalPages }, (_, index) => {
+    const page = index + 1;
+    return `<button class="page-btn ${page === currentPage ? 'active' : ''}" type="button" onclick="goToPage(${page})">${page}</button>`;
+  }).join('');
+
+  pagination.innerHTML = `
+    <div class="pagination-info">Page ${currentPage} sur ${totalPages} (${Math.min(items.length, pageSize * maxPages)} résultats affichés)</div>
+    <div class="pagination-actions">
+      <button class="page-control" type="button" onclick="previousPage()" ${prevDisabled}>« Précédent</button>
+      ${pageButtons}
+      <button class="page-control" type="button" onclick="nextPage()" ${nextDisabled}>Suivant »</button>
+    </div>
+  `;
+}
+
+function goToPage(page) {
+  currentPage = Math.max(1, Math.min(page, maxPages));
+  renderGrid();
+}
+
+function previousPage() {
+  if (currentPage > 1) {
+    currentPage -= 1;
+    renderGrid();
+  }
+}
+
+function nextPage() {
+  currentPage += 1;
+  renderGrid();
 }
 
 function buildCardMarkup(item) {
   const isFavorite = favorites.includes(item.id);
   const isSelected = selectedIds.includes(item.id);
   const imageMarkup = item.imageUrl
-    ? `<img class="card-img" src="${item.imageUrl}" alt="${item.title}" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div class=\'card-img-fallback\'>${item.icon || '🎨'}</div>'">`
+    ? `<img class="card-img" src="${item.imageUrl}" alt="${item.title}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div class=\'card-img-fallback\'>${item.icon || '🎨'}</div>'">`
     : `<div class="card-img">${item.icon || '🎨'}</div>`;
 
   return `
@@ -518,6 +585,7 @@ function printSelectedActivities() {
 
 function toggleFavOnly() {
   favOnly = !favOnly;
+  currentPage = 1;
   document.body.classList.toggle('fav-only', favOnly);
   renderGrid();
 }
@@ -532,6 +600,7 @@ function goHome() {
   if (categoryFilter) categoryFilter.value = 'all';
 
   favOnly = false;
+  currentPage = 1;
   document.body.classList.remove('fav-only');
   searchResultIds = [];
   hideWebResults();
@@ -551,6 +620,7 @@ function clearSearch() {
   const queryInput = document.getElementById('aiQuery');
   if (queryInput) queryInput.value = '';
   searchResultIds = [];
+  currentPage = 1;
   hideWebResults();
   renderGrid();
 }
@@ -567,11 +637,11 @@ async function runAIAssistant() {
   showResponse('Recherche en cours…', 'loading');
 
   try {
-    const response = await fetch('/.netlify/functions/assistant', {
+    const response = await fetchWithTimeout('/.netlify/functions/assistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, action: 'search' })
-    });
+    }, 3000);
 
     if (!response.ok) throw new Error('La recherche IA n’a pas répondu correctement.');
 
@@ -704,11 +774,11 @@ async function importFromWeb() {
   showResponse('Analyse en cours…', 'loading');
 
   try {
-    const response = await fetch('/.netlify/functions/assistant', {
+    const response = await fetchWithTimeout('/.netlify/functions/assistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, action: 'import_url' })
-    });
+    }, 3000);
 
     if (!response.ok) throw new Error('Import impossible.');
 
