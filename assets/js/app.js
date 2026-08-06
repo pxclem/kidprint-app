@@ -373,71 +373,111 @@ function sanitizeSvgText(text = '') {
 }
 
 function createColoringSvgDataUri(query = '') {
-  const normalized = (query || '').toLowerCase();
   const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Coloriage';
-  let shapeMarkup = '';
-
-  if (/dino|dinosaure/.test(normalized)) {
-    shapeMarkup = `
-      <path d="M120 420 q40 -80 80 -40 q20 -40 60 -20 q20 -10 30 -40 q15 -30 45 -20 q10 20 0 40 q-5 15 -15 20 q15 20 30 40 q10 10 5 20 q0 20 -20 10 q-30 -10 -70 0 q-30 10 -70 -10 q-50 -20 -50 0 q0 15 25 15 z" fill="none" stroke="#000" stroke-width="10"/>`;
-  } else if (/licorne/.test(normalized)) {
-    shapeMarkup = `
-      <path d="M120 420 q40 -120 120 -120 q70 0 120 80 q40 70 70 50 q0 30 -40 40 q-30 10 -90 -20 q-40 10 -50 -20 q-25 20 -55 0 q-30 -20 -50 -10 z" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M260 180 l40 -100 l20 80" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M230 250 q-20 -30 -10 -70" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M240 210 q20 -30 60 -30" fill="none" stroke="#000" stroke-width="8"/>`;
-  } else if (/papillon/.test(normalized)) {
-    shapeMarkup = `
-      <path d="M200 320 q-90 -120 -20 -180 q80 -70 140 -20 q30 30 30 70 q0 40 -40 40 q-40 0 -40 -40 q0 -20 20 -40" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M300 320 q90 -120 20 -180 q-80 -70 -140 -20 q-30 30 -30 70 q0 40 40 40 q40 0 40 -40 q0 -20 -20 -40" fill="none" stroke="#000" stroke-width="10"/>
-      <circle cx="240" cy="280" r="18" fill="none" stroke="#000" stroke-width="10"/>`;
-  } else if (/mer|océan|poisson|requin/.test(normalized)) {
-    shapeMarkup = `
-      <path d="M120 390 q80 -70 140 -50 q20 0 70 25 q15 10 40 15 q10 5 15 20 q10 30 -20 40 q-30 15 -80 10 q-40 -5 -85 -15 q-30 0 -30 -30 z" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M220 345 q-20 -40 10 -70" fill="none" stroke="#000" stroke-width="8"/>
-      <circle cx="230" cy="360" r="12" fill="none" stroke="#000" stroke-width="8"/>`;
-  } else if (/fleur|jardin|nature|arbre/.test(normalized)) {
-    shapeMarkup = `
-      <circle cx="180" cy="240" r="30" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M180 240 l-70 -40 l20 70 l-20 -70 l70 40 z" fill="none" stroke="#000" stroke-width="8"/>
-      <path d="M180 240 l70 -40 l-20 70 l20 -70 l-70 40 z" fill="none" stroke="#000" stroke-width="8"/>
-      <path d="M180 240 l0 150" fill="none" stroke="#000" stroke-width="12"/>
-      <path d="M140 450 q40 40 80 0" fill="none" stroke="#000" stroke-width="10"/>`;
-  } else {
-    shapeMarkup = `
-      <path d="M120 430 h180 v-140 h120 v140 h180" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M140 430 q40 -70 120 -70 q80 0 120 70" fill="none" stroke="#000" stroke-width="10"/>
-      <path d="M320 260 l0 -90 l40 20" fill="none" stroke="#000" stroke-width="10"/>
-      <circle cx="360" cy="220" r="18" fill="none" stroke="#000" stroke-width="10"/>`;
-  }
-
-  const keywords = query
-    .split(/\s+/)
-    .filter((word) => word.length > 2)
-    .slice(0, 5)
-    .map((word) => sanitizeSvgText(word.replace(/[^\wÀ-ÿ-]/g, '')))
-    .filter(Boolean);
-
-  const keywordLines = keywords
-    .map((word, index) => `<text x="540" y="220" dy="${index * 36}" font-size="28" fill="none" stroke="#000" stroke-width="1" paint-order="stroke">${word}</text>`)
-    .join('');
-
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
       <rect width="800" height="600" fill="#fff" />
-      <text x="50" y="70" font-size="40" font-weight="700" fill="none" stroke="#000" stroke-width="2" paint-order="stroke">Coloriage</text>
-      <text x="50" y="110" font-size="28" fill="#000">${label}</text>
-      <g transform="translate(40, 120)">
-        ${shapeMarkup}
+      <text x="50" y="80" font-size="42" font-weight="700" fill="#000" font-family="Segoe UI, Arial, sans-serif">Coloriage</text>
+      <text x="50" y="120" font-size="28" fill="#000">${label}</text>
+      <g transform="translate(80, 160)">
+        <circle cx="150" cy="120" r="70" fill="none" stroke="#000" stroke-width="14" />
+        <path d="M70 220 l160 -130 l160 130" fill="none" stroke="#000" stroke-width="14" />
+        <path d="M100 280 q120 -140 220 0" fill="none" stroke="#000" stroke-width="12" />
+        <path d="M250 50 l30 -70 l30 70" fill="none" stroke="#000" stroke-width="12" />
       </g>
-      ${keywordLines}
-      <g stroke="#000" stroke-width="6" fill="none">
-        <path d="M50 540 c60 -80 120 -80 180 0" />
-        <path d="M220 540 c60 -80 120 -80 180 0" />
+      <text x="50" y="560" font-size="22" fill="#000" font-family="Segoe UI, Arial, sans-serif">Coloriage à colorier</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function createMazeSvgDataUri(query = '') {
+  const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Labyrinthe';
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+      <rect width="800" height="600" fill="#fff" />
+      <text x="50" y="80" font-size="42" font-weight="700" fill="#000" font-family="Segoe UI, Arial, sans-serif">Labyrinthe</text>
+      <text x="50" y="120" font-size="28" fill="#000">${label}</text>
+      <g transform="translate(70, 150)" fill="none" stroke="#000" stroke-width="12">
+        <rect x="0" y="0" width="660" height="360" />
+        <path d="M0 100 H520 V60 H120 V300 H660" />
+        <path d="M180 0 V260 H260 V180 H620 V340 H0" />
+        <path d="M320 80 H660 V220 H540 V140 H380" />
+      </g>
+      <circle cx="720" cy="100" r="18" fill="#000" />
+      <circle cx="80" cy="520" r="18" fill="#000" />
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function createWordSearchSvgDataUri(query = '') {
+  const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Mots fléchés';
+  const grid = ['A B C D E', 'F G H I J', 'K L M N O', 'P Q R S T', 'U V W X Y'];
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+      <rect width="800" height="600" fill="#fff" />
+      <text x="50" y="80" font-size="42" font-weight="700" fill="#000" font-family="Segoe UI, Arial, sans-serif">Mots fléchés</text>
+      <text x="50" y="120" font-size="28" fill="#000">${label}</text>
+      <g transform="translate(70, 200)" font-family="Courier New, monospace" font-size="34" fill="#000" letter-spacing="10">
+        ${grid.map((row, index) => `<text x="0" y="${index * 60}">${row}</text>`).join('')}
       </g>
     </svg>
   `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
 
+function createExerciseSvgDataUri(query = '') {
+  const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Exercice';
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+      <rect width="800" height="600" fill="#fff" />
+      <text x="50" y="80" font-size="42" font-weight="700" fill="#000" font-family="Segoe UI, Arial, sans-serif">Exercice</text>
+      <text x="50" y="120" font-size="28" fill="#000">${label}</text>
+      <g fill="none" stroke="#000" stroke-width="12">
+        <rect x="70" y="170" width="660" height="320" rx="28" />
+        <path d="M120 240 H520" />
+        <path d="M120 310 H520" />
+        <path d="M120 380 H520" />
+        <path d="M120 450 H520" />
+        <circle cx="620" cy="245" r="16" />
+        <circle cx="620" cy="315" r="16" />
+        <circle cx="620" cy="385" r="16" />
+        <circle cx="620" cy="455" r="16" />
+      </g>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function createCreativitySvgDataUri(query = '') {
+  const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Créativité';
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+      <rect width="800" height="600" fill="#fff" />
+      <text x="50" y="80" font-size="42" font-weight="700" fill="#000" font-family="Segoe UI, Arial, sans-serif">Créativité</text>
+      <text x="50" y="120" font-size="28" fill="#000">${label}</text>
+      <g fill="none" stroke="#000" stroke-width="12">
+        <path d="M120 260 q100 -180 200 0 q60 -120 140 0" />
+        <path d="M180 260 a40 40 0 1 1 80 0 a40 40 0 1 1 -80 0" />
+        <path d="M430 220 l100 -120" />
+        <path d="M480 220 l100 -80" />
+        <path d="M620 300 q40 -80 80 0" />
+      </g>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function createActivityPlaceholderSvgDataUri(query = '') {
+  const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Activité';
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+      <rect width="800" height="600" fill="#f7fafc" />
+      <rect x="60" y="90" width="680" height="420" rx="32" fill="#fff" stroke="#cbd5e1" stroke-width="14" />
+      <text x="50%" y="330" text-anchor="middle" font-size="40" fill="#475569" font-family="Segoe UI, Arial, sans-serif">${label}</text>
+    </svg>
+  `;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
@@ -453,16 +493,22 @@ function inferObjective(query) {
 function inferImage(query) {
   const normalized = (query || '').toLowerCase();
   if (normalized.includes('coloriage') || normalized.includes('dessin')) return createColoringSvgDataUri(query);
-  if (normalized.includes('labyrinthe')) return 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80';
-  if (normalized.includes('mot') || normalized.includes('lettre')) return 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=800&q=80';
-  if (normalized.includes('math') || normalized.includes('calcul')) return 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?auto=format&fit=crop&w=800&q=80';
-  return 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=800&q=80';
+  if (normalized.includes('labyrinthe')) return createMazeSvgDataUri(query);
+  if (normalized.includes('mot') || normalized.includes('lettre') || normalized.includes('mots') || normalized.includes('fléchés')) return createWordSearchSvgDataUri(query);
+  if (normalized.includes('math') || normalized.includes('calcul')) return createExerciseSvgDataUri(query);
+  return createActivityPlaceholderSvgDataUri(query);
 }
 
 function getImageUrlForItem(item) {
   if (item.imageUrl) return item.imageUrl;
-  if (item.category === 'Coloriage') return createColoringSvgDataUri(item.title || item.desc || 'Coloriage');
-  return inferImage(item.title || item.desc || '');
+  const category = (item.category || '').toLowerCase();
+  const titleOrDesc = item.title || item.desc || 'Activité';
+  if (category.includes('coloriage') || category.includes('dessin')) return createColoringSvgDataUri(titleOrDesc);
+  if (category.includes('labyrinthe')) return createMazeSvgDataUri(titleOrDesc);
+  if (category.includes('mot') || category.includes('lettre') || category.includes('mots') || category.includes('fléchés')) return createWordSearchSvgDataUri(titleOrDesc);
+  if (category.includes('exercice')) return createExerciseSvgDataUri(titleOrDesc);
+  if (category.includes('créativité') || category.includes('creativite')) return createCreativitySvgDataUri(titleOrDesc);
+  return createActivityPlaceholderSvgDataUri(titleOrDesc);
 }
 
 async function loadActivities() {
@@ -787,6 +833,10 @@ function clearSearch() {
   renderGrid();
 }
 
+function isColoringModeEnabled() {
+  return document.getElementById('coloringModeToggle')?.checked;
+}
+
 async function runAIAssistant() {
   const input = document.getElementById('aiQuery');
   const query = input?.value?.trim();
@@ -798,11 +848,13 @@ async function runAIAssistant() {
 
   showResponse('Recherche en cours…', 'loading');
 
+  const action = isColoringModeEnabled() ? 'generate_coloring' : 'search';
+
   try {
     const response = await fetchWithTimeout('/.netlify/functions/assistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, action: 'search' })
+      body: JSON.stringify({ query, action })
     }, 3000);
 
     if (!response.ok) throw new Error('La recherche IA n’a pas répondu correctement.');

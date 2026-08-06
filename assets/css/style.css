@@ -49,6 +49,9 @@ header { background: linear-gradient(135deg, var(--primary), var(--accent)); col
 .ai-help { color: #5f6b7a; margin-bottom: 0.8rem; }
 .ai-input-group { display: flex; gap: 10px; flex-wrap: wrap; }
 .ai-input-group input, .import-group input { flex: 1; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; min-width: 220px; }
+.ai-mode-row { margin-top: 0.85rem; }
+.ai-mode-label { display: inline-flex; align-items: center; gap: 0.5rem; color: #334155; font-size: 0.95rem; }
+.ai-mode-label input { width: 18px; height: 18px; }
 .btn { background: var(--primary); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
 .btn:hover { opacity: 0.9; }
 .btn-secondary { background: var(--secondary); }

@@ -100,6 +100,23 @@ function enrichActivity(item, query) {
   };
 }
 
+function buildGeneratedColoringActivity(query) {
+  const safeQuery = query.trim().replace(/\s+/g, ' ');
+  const summary = safeQuery.length > 50 ? `${safeQuery.slice(0, 50).trim()}...` : safeQuery;
+  const title = `Coloriage : ${summary}`;
+  return {
+    id: Date.now(),
+    title,
+    category: 'Coloriage',
+    age: inferAge(query),
+    icon: '🎨',
+    desc: `Coloriage IA créé à partir de votre demande : ${safeQuery}`,
+    difficulty: inferDifficulty(query),
+    objective: inferObjective(query),
+    imageUrl: ''
+  };
+}
+
 function buildSuggestedActivity(query) {
   return {
     id: Date.now(),
@@ -395,6 +412,22 @@ exports.handler = async function(event) {
           success: true,
           message: 'Activité préparée à partir de votre demande ou de l’URL fournie.',
           createdActivity
+        })
+      };
+    }
+
+    if (action === 'generate_coloring') {
+      const createdActivity = buildGeneratedColoringActivity(query);
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true,
+          message: 'Coloriage IA généré selon votre demande.',
+          createdActivity,
+          webActivities: [],
+          recommendedActivities: [],
+          webResults: []
         })
       };
     }

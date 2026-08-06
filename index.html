@@ -55,8 +55,14 @@
       <h2>🤖 Recherche IA pour enfant</h2>
       <p class="ai-help">Décris ce que cherche ton enfant : âge, thème, niveau ou type d’activité.</p>
       <div class="ai-input-group">
-        <input type="text" id="aiQuery" placeholder="Ex. : activité de coloriage pour un enfant de 5 ans qui aime les dinosaures">
+        <input type="text" id="aiQuery" placeholder="Ex. : coloriage reine des neiges dans un magasin de jouets avec une sauterelle">
         <button class="btn" onclick="runAIAssistant()">Chercher & ajouter</button>
+      </div>
+      <div class="ai-mode-row">
+        <label class="ai-mode-label">
+          <input type="checkbox" id="coloringModeToggle">
+          Activer le mode IA coloriage (génère un dessin sur mesure)
+        </label>
       </div>
       <div class="ai-actions">
         <button class="btn-outline" onclick="randomSuggestion()">Suggestion IA</button>
