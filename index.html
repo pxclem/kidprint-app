@@ -13,9 +13,38 @@
         <h1>KidPrint IA</h1>
         <p>Une plateforme intelligente pour trouver, ajouter et imprimer des activités pour enfants.</p>
       </div>
-      <button class="btn btn-secondary" type="button" onclick="goHome()">Accueil</button>
+      <div class="header-actions">
+        <button class="btn-outline" type="button" onclick="showOnboarding()">Onboarding</button>
+        <button class="btn btn-secondary" type="button" onclick="goHome()">Accueil</button>
+      </div>
     </div>
   </header>
+
+  <section class="hero-panel">
+    <div class="hero-copy">
+      <p class="eyebrow">Simple, rapide, imprimable</p>
+      <h2>KidPrint aide les parents à trouver des activités ludiques et à imprimer des fiches adaptées.</h2>
+      <p class="hero-text">Crée un profil, cherche avec l’IA, sélectionne tes activités favorites et génère un PDF prêt à imprimer.</p>
+      <div class="hero-actions">
+        <button class="btn" type="button" onclick="showOnboarding()">Voir l’onboarding</button>
+        <button class="btn-outline" type="button" onclick="goHome()">Réinitialiser</button>
+      </div>
+    </div>
+    <div class="hero-quick">
+      <div class="quick-card">
+        <strong>Étape 1</strong>
+        <p>Choisis ou crée un profil pour mieux organiser les activités.</p>
+      </div>
+      <div class="quick-card">
+        <strong>Étape 2</strong>
+        <p>Recherche une activité, filtre et ajoute facilement.</p>
+      </div>
+      <div class="quick-card">
+        <strong>Étape 3</strong>
+        <p>Imprime uniquement les activités sélectionnées.</p>
+      </div>
+    </div>
+  </section>
 
   <div class="container">
     <section class="profile-bar" id="profileBar">

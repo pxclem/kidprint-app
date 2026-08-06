@@ -7,6 +7,8 @@ const STORAGE_KEYS = {
   history: 'search_history'
 };
 
+const ONBOARDING_KEY = 'kidprint_onboarding_seen';
+
 let items = [];
 let customItems = [];
 let favorites = [];
@@ -19,6 +21,25 @@ let currentProfile = null;
 let currentPage = 1;
 const pageSize = 10;
 const maxPages = 10; // maximum pages to display (10 pages * 10 items = 100 results)
+let onboardingStep = 0;
+const onboardingSteps = [
+  {
+    title: '1. Crée un profil',
+    description: 'Choisis ou créé un profil pour chaque enfant afin de sauvegarder les activités séparément et organiser facilement tes listes.'
+  },
+  {
+    title: '2. Recherche une activité',
+    description: 'Écris une demande simple et précise pour trouver un coloriage, un labyrinthe ou une activité créative adaptée à l’âge de l’enfant.'
+  },
+  {
+    title: '3. Ajoute à ta sélection',
+    description: 'Clique sur “Ajouter” pour préparer les activités à imprimer. Les éléments sélectionnés seront ensuite transformés en PDF.'
+  },
+  {
+    title: '4. Imprime ton PDF',
+    description: 'Ouvre le PDF de sélection, vérifie tes activités, puis imprime uniquement les fiches dont tu as besoin.'
+  }
+];
 
 function initApp() {
   loadProfiles();
@@ -35,9 +56,11 @@ function initApp() {
   window.changeProfile = changeProfile;
   window.goHome = goHome;
   window.selectDailyActivity = selectDailyActivity;
+  window.showOnboarding = showOnboarding;
 
   renderProfileSelector();
   loadActivities();
+  checkOnboarding();
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
@@ -51,6 +74,53 @@ function bindEvents() {
       }
     });
   }
+}
+
+function checkOnboarding() {
+  if (!localStorage.getItem(ONBOARDING_KEY)) {
+    setTimeout(() => {
+      showOnboarding(true);
+    }, 800);
+  }
+}
+
+function showOnboarding(force = false, step = 0) {
+  onboardingStep = Math.max(0, Math.min(step, onboardingSteps.length - 1));
+  const current = onboardingSteps[onboardingStep];
+
+  const isLastStep = onboardingStep === onboardingSteps.length - 1;
+
+  openModal({
+    title: current.title,
+    body: `
+      <div class="onboarding-content">
+        <div class="onboarding-step">
+          <p>${current.description}</p>
+        </div>
+        <div class="onboarding-progress">Étape ${onboardingStep + 1} sur ${onboardingSteps.length}</div>
+      </div>
+    `,
+    confirmText: isLastStep ? 'C’est parti !' : 'Suivant',
+    cancelText: onboardingStep === 0 ? (force ? 'Ne plus afficher' : 'Annuler') : 'Précédent',
+    onConfirm: () => {
+      if (!isLastStep) {
+        showOnboarding(force, onboardingStep + 1);
+        return false;
+      }
+      localStorage.setItem(ONBOARDING_KEY, 'true');
+      return true;
+    },
+    onCancel: () => {
+      if (onboardingStep === 0) {
+        if (force) {
+          localStorage.setItem(ONBOARDING_KEY, 'true');
+        }
+        closeModal();
+      } else {
+        showOnboarding(force, onboardingStep - 1);
+      }
+    }
+  });
 }
 
 async function fetchWithTimeout(url, options = {}, timeout = 3000) {
@@ -170,7 +240,7 @@ function renderProfileSelector() {
   `;
 }
 
-function openModal({ title, body, confirmText = 'OK', cancelText = 'Annuler', onConfirm }) {
+function openModal({ title, body, confirmText = 'OK', cancelText = 'Annuler', onConfirm, onCancel }) {
   const overlay = document.getElementById('modalOverlay');
   const content = document.getElementById('modalContent');
   if (!overlay || !content) return;
@@ -190,7 +260,13 @@ function openModal({ title, body, confirmText = 'OK', cancelText = 'Annuler', on
   const confirmBtn = document.getElementById('modalConfirm');
   const cancelBtn = document.getElementById('modalCancel');
 
-  cancelBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', () => {
+    if (typeof onCancel === 'function') {
+      onCancel();
+    } else {
+      closeModal();
+    }
+  });
   confirmBtn?.addEventListener('click', () => {
     const result = typeof onConfirm === 'function' ? onConfirm() : true;
     if (result !== false) closeModal();
@@ -287,6 +363,84 @@ function inferDifficulty(query) {
   return 'Moyen';
 }
 
+function sanitizeSvgText(text = '') {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function createColoringSvgDataUri(query = '') {
+  const normalized = (query || '').toLowerCase();
+  const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Coloriage';
+  let shapeMarkup = '';
+
+  if (/dino|dinosaure/.test(normalized)) {
+    shapeMarkup = `
+      <path d="M120 420 q40 -80 80 -40 q20 -40 60 -20 q20 -10 30 -40 q15 -30 45 -20 q10 20 0 40 q-5 15 -15 20 q15 20 30 40 q10 10 5 20 q0 20 -20 10 q-30 -10 -70 0 q-30 10 -70 -10 q-50 -20 -50 0 q0 15 25 15 z" fill="none" stroke="#000" stroke-width="10"/>`;
+  } else if (/licorne/.test(normalized)) {
+    shapeMarkup = `
+      <path d="M120 420 q40 -120 120 -120 q70 0 120 80 q40 70 70 50 q0 30 -40 40 q-30 10 -90 -20 q-40 10 -50 -20 q-25 20 -55 0 q-30 -20 -50 -10 z" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M260 180 l40 -100 l20 80" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M230 250 q-20 -30 -10 -70" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M240 210 q20 -30 60 -30" fill="none" stroke="#000" stroke-width="8"/>`;
+  } else if (/papillon/.test(normalized)) {
+    shapeMarkup = `
+      <path d="M200 320 q-90 -120 -20 -180 q80 -70 140 -20 q30 30 30 70 q0 40 -40 40 q-40 0 -40 -40 q0 -20 20 -40" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M300 320 q90 -120 20 -180 q-80 -70 -140 -20 q-30 30 -30 70 q0 40 40 40 q40 0 40 -40 q0 -20 -20 -40" fill="none" stroke="#000" stroke-width="10"/>
+      <circle cx="240" cy="280" r="18" fill="none" stroke="#000" stroke-width="10"/>`;
+  } else if (/mer|océan|poisson|requin/.test(normalized)) {
+    shapeMarkup = `
+      <path d="M120 390 q80 -70 140 -50 q20 0 70 25 q15 10 40 15 q10 5 15 20 q10 30 -20 40 q-30 15 -80 10 q-40 -5 -85 -15 q-30 0 -30 -30 z" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M220 345 q-20 -40 10 -70" fill="none" stroke="#000" stroke-width="8"/>
+      <circle cx="230" cy="360" r="12" fill="none" stroke="#000" stroke-width="8"/>`;
+  } else if (/fleur|jardin|nature|arbre/.test(normalized)) {
+    shapeMarkup = `
+      <circle cx="180" cy="240" r="30" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M180 240 l-70 -40 l20 70 l-20 -70 l70 40 z" fill="none" stroke="#000" stroke-width="8"/>
+      <path d="M180 240 l70 -40 l-20 70 l20 -70 l-70 40 z" fill="none" stroke="#000" stroke-width="8"/>
+      <path d="M180 240 l0 150" fill="none" stroke="#000" stroke-width="12"/>
+      <path d="M140 450 q40 40 80 0" fill="none" stroke="#000" stroke-width="10"/>`;
+  } else {
+    shapeMarkup = `
+      <path d="M120 430 h180 v-140 h120 v140 h180" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M140 430 q40 -70 120 -70 q80 0 120 70" fill="none" stroke="#000" stroke-width="10"/>
+      <path d="M320 260 l0 -90 l40 20" fill="none" stroke="#000" stroke-width="10"/>
+      <circle cx="360" cy="220" r="18" fill="none" stroke="#000" stroke-width="10"/>`;
+  }
+
+  const keywords = query
+    .split(/\s+/)
+    .filter((word) => word.length > 2)
+    .slice(0, 5)
+    .map((word) => sanitizeSvgText(word.replace(/[^\wÀ-ÿ-]/g, '')))
+    .filter(Boolean);
+
+  const keywordLines = keywords
+    .map((word, index) => `<text x="540" y="220" dy="${index * 36}" font-size="28" fill="none" stroke="#000" stroke-width="1" paint-order="stroke">${word}</text>`)
+    .join('');
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+      <rect width="800" height="600" fill="#fff" />
+      <text x="50" y="70" font-size="40" font-weight="700" fill="none" stroke="#000" stroke-width="2" paint-order="stroke">Coloriage</text>
+      <text x="50" y="110" font-size="28" fill="#000">${label}</text>
+      <g transform="translate(40, 120)">
+        ${shapeMarkup}
+      </g>
+      ${keywordLines}
+      <g stroke="#000" stroke-width="6" fill="none">
+        <path d="M50 540 c60 -80 120 -80 180 0" />
+        <path d="M220 540 c60 -80 120 -80 180 0" />
+      </g>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 function inferObjective(query) {
   const normalized = (query || '').toLowerCase();
   if (normalized.includes('coloriage') || normalized.includes('dessin')) return 'Développer la motricité fine et la concentration';
@@ -298,11 +452,17 @@ function inferObjective(query) {
 
 function inferImage(query) {
   const normalized = (query || '').toLowerCase();
-  if (normalized.includes('coloriage') || normalized.includes('dessin')) return 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=800&q=80';
+  if (normalized.includes('coloriage') || normalized.includes('dessin')) return createColoringSvgDataUri(query);
   if (normalized.includes('labyrinthe')) return 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80';
   if (normalized.includes('mot') || normalized.includes('lettre')) return 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=800&q=80';
   if (normalized.includes('math') || normalized.includes('calcul')) return 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?auto=format&fit=crop&w=800&q=80';
   return 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=800&q=80';
+}
+
+function getImageUrlForItem(item) {
+  if (item.imageUrl) return item.imageUrl;
+  if (item.category === 'Coloriage') return createColoringSvgDataUri(item.title || item.desc || 'Coloriage');
+  return inferImage(item.title || item.desc || '');
 }
 
 async function loadActivities() {
@@ -370,18 +530,18 @@ function renderGrid() {
 
   if (limitedItems.length === 0) {
     grid.innerHTML = '<div class="empty-state">Aucune activité ne correspond à ce filtre pour l’instant.</div>';
-    renderPagination(0);
+    renderPagination(0, 0);
     updateBundleBar();
     return;
   }
 
   grid.innerHTML = pagedItems.map((item) => buildCardMarkup(item)).join('');
-  renderPagination(totalPages);
+  renderPagination(totalPages, limitedItems.length);
   updateFavoriteCount();
   updateBundleBar();
 }
 
-function renderPagination(totalPages) {
+function renderPagination(totalPages, resultCount = 0) {
   const pagination = document.getElementById('paginationControls');
   if (!pagination) return;
 
@@ -399,7 +559,7 @@ function renderPagination(totalPages) {
   }).join('');
 
   pagination.innerHTML = `
-    <div class="pagination-info">Page ${currentPage} sur ${totalPages} (${Math.min(items.length, pageSize * maxPages)} résultats affichés)</div>
+    <div class="pagination-info">Page ${currentPage} sur ${totalPages} (${resultCount} résultats affichés)</div>
     <div class="pagination-actions">
       <button class="page-control" type="button" onclick="previousPage()" ${prevDisabled}>« Précédent</button>
       ${pageButtons}
@@ -428,8 +588,9 @@ function nextPage() {
 function buildCardMarkup(item) {
   const isFavorite = favorites.includes(item.id);
   const isSelected = selectedIds.includes(item.id);
-  const imageMarkup = item.imageUrl
-    ? `<img class="card-img" src="${item.imageUrl}" alt="${item.title}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div class=\'card-img-fallback\'>${item.icon || '🎨'}</div>'">`
+  const imageUrl = getImageUrlForItem(item);
+  const imageMarkup = imageUrl
+    ? `<img class="card-img" src="${imageUrl}" alt="${item.title}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div class=\'card-img-fallback\'>${item.icon || '🎨'}</div>'">`
     : `<div class="card-img">${item.icon || '🎨'}</div>`;
 
   return `
@@ -515,8 +676,9 @@ function printSelectedActivities() {
   }
 
   const content = selectedItems.map((item) => {
-    const imageBlock = item.imageUrl
-      ? `<img src="${item.imageUrl}" alt="${item.title}" class="print-image" onerror="this.style.display='none';">`
+    const imageUrl = getImageUrlForItem(item);
+    const imageBlock = imageUrl
+      ? `<img src="${imageUrl}" alt="${item.title}" class="print-image" onerror="this.style.display='none';">`
       : '';
 
     return `
@@ -896,7 +1058,8 @@ function createFallbackActivity(query, source) {
     category,
     age: '6-8',
     icon,
-    desc: `Activité créée à partir de votre demande : ${normalized}`
+    desc: `Activité créée à partir de votre demande : ${normalized}`,
+    imageUrl: category === 'Coloriage' ? createColoringSvgDataUri(normalized) : ''
   };
 }
 
