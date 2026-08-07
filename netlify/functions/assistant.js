@@ -102,7 +102,7 @@ function enrichActivity(item, query) {
 
 function buildGeneratedColoringActivity(query) {
   const safeQuery = query.trim().replace(/\s+/g, ' ');
-  const summary = safeQuery.length > 50 ? `${safeQuery.slice(0, 50).trim()}...` : safeQuery;
+  const summary = safeQuery.length > 40 ? `${safeQuery.slice(0, 40).trim()}...` : safeQuery;
   const title = `Coloriage : ${summary}`;
   return {
     id: Date.now(),
@@ -113,7 +113,9 @@ function buildGeneratedColoringActivity(query) {
     desc: `Coloriage IA créé à partir de votre demande : ${safeQuery}`,
     difficulty: inferDifficulty(query),
     objective: inferObjective(query),
-    imageUrl: ''
+    imageUrl: '',
+    queryIcon: '🧠',
+    querySummary: safeQuery
   };
 }
 

@@ -638,6 +638,7 @@ function buildCardMarkup(item) {
   const imageMarkup = imageUrl
     ? `<img class="card-img" src="${imageUrl}" alt="${item.title}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div class=\'card-img-fallback\'>${item.icon || '🎨'}</div>'">`
     : `<div class="card-img">${item.icon || '🎨'}</div>`;
+  const queryBadgeMarkup = item.queryIcon ? `<div class="card-query"><span class="query-badge">${item.queryIcon}</span>${item.querySummary || 'Recherche IA'}</div>` : '';
 
   return `
     <article class="card ${isSelected ? 'selected-card' : ''}">
@@ -646,6 +647,7 @@ function buildCardMarkup(item) {
       <div class="card-body">
         <div>
           <h3>${item.title}</h3>
+          ${queryBadgeMarkup}
           <p>${item.desc || 'Activité à imprimer et à découvrir.'}</p>
           ${item.difficulty ? `<p class="meta-line">Niveau : <strong>${item.difficulty}</strong></p>` : ''}
           ${item.objective ? `<p class="meta-line">Objectif : ${item.objective}</p>` : ''}
@@ -833,10 +835,6 @@ function clearSearch() {
   renderGrid();
 }
 
-function isColoringModeEnabled() {
-  return document.getElementById('coloringModeToggle')?.checked;
-}
-
 async function runAIAssistant() {
   const input = document.getElementById('aiQuery');
   const query = input?.value?.trim();
@@ -848,13 +846,11 @@ async function runAIAssistant() {
 
   showResponse('Recherche en cours…', 'loading');
 
-  const action = isColoringModeEnabled() ? 'generate_coloring' : 'search';
-
   try {
     const response = await fetchWithTimeout('/.netlify/functions/assistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, action })
+      body: JSON.stringify({ query, action: 'search' })
     }, 3000);
 
     if (!response.ok) throw new Error('La recherche IA n’a pas répondu correctement.');
@@ -902,6 +898,44 @@ async function runAIAssistant() {
     showResponse(`Recherche locale utilisée : ${fallbackResults.length} activité(s) correspondante(s).`, 'success');
     hideWebResults();
     renderGrid();
+  }
+}
+
+async function generateColoringIA() {
+  const input = document.getElementById('aiQuery');
+  const query = input?.value?.trim();
+
+  if (!query) {
+    showResponse('Écris un thème ou une scène pour générer un coloriage IA.', 'info');
+    return;
+  }
+
+  showResponse('Génération du coloriage IA…', 'loading');
+
+  try {
+    const response = await fetchWithTimeout('/.netlify/functions/assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, action: 'generate_coloring' })
+    }, 5000);
+
+    if (!response.ok) throw new Error('Le mode coloriage IA n’a pas répondu correctement.');
+
+    const data = await response.json();
+    if (data.createdActivity) {
+      addCustomActivity(data.createdActivity);
+      selectedIds = [data.createdActivity.id];
+      saveSelectedItems();
+      searchResultIds = [data.createdActivity.id];
+      renderGrid();
+      showResponse('Coloriage IA généré avec succès. Impression en cours…', 'success');
+      setTimeout(() => printSelectedActivities(), 500);
+      return;
+    }
+
+    showResponse('Le coloriage IA n’a pas pu être généré. Essaie une autre description.', 'error');
+  } catch (error) {
+    showResponse('Erreur lors de la génération du coloriage IA. Réessaie.', 'error');
   }
 }
 

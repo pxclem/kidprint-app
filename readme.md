@@ -54,3 +54,38 @@ Application web statique pour rechercher, filtrer et imprimer des activités lud
 - Mentionne dans ton message si tu souhaites faire un don, et nous te répondrons avec les options disponibles.
 - Nous ne partageons pas tes informations personnelles : ton message reste privé.
 - Merci de soutenir KidPrint et d’aider à rendre les activités encore plus accessibles pour les enfants.
+
+## Mode Coloriage IA
+
+- Utilise le champ de recherche pour décrire la scène que tu veux (ex. : "reine des neiges dans un magasin de jouets avec une sauterelle").
+- Clique sur `Générer un coloriage IA` pour créer un coloriage sur mesure basé sur ta description. L’activité générée apparaîtra dans la liste et la prévisualisation imprimable sera automatiquement lancée.
+- L’image du coloriage est générée côté client en SVG et est adaptée à l’impression A4.
+
+## Tests & Validation
+
+- Démarrage local :
+
+```bash
+npm install
+npm start
+# ouvre http://localhost:8888
+```
+
+- Scénarios à vérifier manuellement :
+	- Recherche d’activités : taper un terme (ex. "labyrinthe forêt") puis `Chercher & ajouter` et vérifier les résultats.
+	- Génération coloriage IA : saisir une description complexe (ex. "coloriage reine des neiges dans un magasin de jouets avec une sauterelle") puis cliquer sur `Générer un coloriage IA` — le coloriage doit apparaître et l’impression se lancer.
+	- Impression : vérifier que le PDF affiche le dessin ou le coloriage attendu et que les métadonnées (titre, âge, catégorie) sont correctes.
+	- Profils : créer un profil, ajouter/supprimer favoris, vérifier que `localStorage` contient les clés spécifiques au profil.
+
+## Notes pour développeurs
+
+- Code important :
+	- Interface : `index.html`
+	- Logique front-end : `assets/js/app.js`
+	- Styles : `assets/css/style.css`
+	- Backend IA simulée (Netlify Function) : `netlify/functions/assistant.js`
+	- Données : `data/activites.json`
+
+- Pour améliorer le mode IA réel : brancher une API LLM (ex. OpenAI) dans `netlify/functions/assistant.js` pour générer des descriptions et SVG plus détaillés. La fonction actuelle simule la génération et expose `createdActivity`.
+
+Merci — dis-moi si tu veux que je lance automatiquement une suite de vérifications supplémentaires ou que j’ajoute des tests unitaires de base.
