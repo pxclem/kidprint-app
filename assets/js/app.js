@@ -381,6 +381,15 @@ function escapeHtml(text = '') {
     .replace(/'/g, '&#39;');
 }
 
+function dedupeItemsById(itemsList) {
+  const map = new Map();
+  itemsList.forEach((item) => {
+    const key = item && item.id !== undefined ? String(item.id) : `custom-${Math.random().toString(36).slice(2)}`;
+    map.set(key, item);
+  });
+  return Array.from(map.values());
+}
+
 function createColoringSvgDataUri(query = '') {
   const label = query.trim() ? sanitizeSvgText(query.trim()) : 'Coloriage';
   const svg = `
@@ -547,7 +556,8 @@ async function loadActivities() {
     ];
   }
 
-  items = [...items, ...customItems];
+  items = dedupeItemsById([...items, ...customItems]);
+  currentPage = 1;
   renderSearchHistory();
   renderDailyActivity();
   requestAnimationFrame(renderGrid);
@@ -578,6 +588,7 @@ function renderGrid() {
     visibleItems = visibleItems.filter((item) => favorites.includes(item.id));
   }
 
+  visibleItems = dedupeItemsById(visibleItems);
   const limitedItems = visibleItems.slice(0, pageSize * maxPages);
   const totalPages = Math.max(1, Math.min(maxPages, Math.ceil(limitedItems.length / pageSize)));
   if (currentPage > totalPages) currentPage = totalPages;
@@ -734,12 +745,6 @@ function printSelectedActivities() {
     return;
   }
 
-  const printWindow = window.open('', '_blank', 'width=900,height=700');
-  if (!printWindow) {
-    showResponse('La fenêtre d’impression a été bloquée. Autorise les popups puis réessaie.', 'info');
-    return;
-  }
-
   const content = selectedItems.map((item) => {
     const imageUrl = getImageUrlForItem(item);
     const safeTitle = escapeHtml(item.title || '');
@@ -782,22 +787,19 @@ function printSelectedActivities() {
     .cover { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 0.8rem; }
     .cover h1 { margin: 0; font-size: 42px; color: #2169d2; }
     .cover p { margin: 0; font-size: 18px; color: #444; }
-    .activity-card { border: 2px solid #e2e8f0; border-radius: 18px; padding: 18px; margin-top: 12mm; display: flex; flex-direction: column; gap: 14px; }
-    .activity-card header { display: flex; flex-direction: column; gap: 8px; }
-    .activity-card h2 { margin: 0; font-size: 30px; color: #1f2937; }
-    .activity-info { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.95rem; color: #475569; }
-    .activity-info span { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; padding: 8px 12px; }
-    .activity-body { display: grid; gap: 12px; }
-    .activity-description { font-size: 1rem; line-height: 1.65; color: #334155; }
-    .activity-image { width: 100%; max-height: 260px; object-fit: cover; border-radius: 14px; }
-    .activity-metadata { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.95rem; color: #334155; }
-    .activity-metadata span { background: #eff6ff; border-radius: 999px; padding: 8px 12px; }
+    .activity-card, .print-card { border: 2px solid #e2e8f0; border-radius: 18px; padding: 18px; margin-top: 12mm; display: flex; flex-direction: column; gap: 14px; }
+    .activity-card header, .print-card header { display: flex; flex-direction: column; gap: 8px; }
+    .activity-card h2, .print-card h2 { margin: 0; font-size: 30px; color: #1f2937; }
+    .activity-info, .print-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.95rem; color: #475569; }
+    .activity-info span, .print-meta span { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; padding: 8px 12px; }
+    .activity-description, .print-description { font-size: 1rem; line-height: 1.65; color: #334155; }
+    .activity-image, .print-image { width: 100%; max-height: 260px; object-fit: cover; border-radius: 14px; }
     .page-footer { margin-top: auto; font-size: 0.9rem; color: #64748b; }
     @media print {
       body { margin: 0; }
       .page { padding: 12mm 16mm; }
-      .activity-card { border-color: #cbd5e1; }
-      .activity-image { max-height: 220px; }
+      .activity-card, .print-card { border-color: #cbd5e1; }
+      .activity-image, .print-image { max-height: 220px; }
     }
   </style>
 </head>
@@ -811,11 +813,65 @@ function printSelectedActivities() {
 </body>
 </html>`;
 
-  printWindow.document.write(html);
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => printWindow.print(), 250);
+  const printWindow = window.open('', '_blank');
+  if (printWindow && printWindow.document) {
+    try {
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        try {
+          printWindow.print();
+        } catch (printPrintError) {
+          console.warn('Erreur lors de l’impression de la nouvelle fenêtre', printPrintError);
+        }
+      }, 250);
+      return;
+    } catch (error) {
+      console.warn('Ouverture de la fenêtre d’impression échouée, utilisation du fallback iframe.', error);
+    }
+  }
+
+  const printFrame = document.createElement('iframe');
+  printFrame.style.position = 'fixed';
+  printFrame.style.right = '0';
+  printFrame.style.bottom = '0';
+  printFrame.style.width = '0';
+  printFrame.style.height = '0';
+  printFrame.style.border = 'none';
+  printFrame.style.opacity = '0';
+  printFrame.id = 'kidprint-print-frame';
+  document.body.appendChild(printFrame);
+
+  const frameDoc = printFrame.contentWindow?.document || printFrame.contentDocument;
+  if (!frameDoc) {
+    showResponse('Impossible de préparer la page d’impression.', 'error');
+    if (printFrame.parentNode) document.body.removeChild(printFrame);
+    return;
+  }
+
+  frameDoc.open();
+  frameDoc.write(html);
+  frameDoc.close();
+
+  const pollPrint = setInterval(() => {
+    const readyState = frameDoc.readyState;
+    if (readyState === 'complete' || readyState === 'interactive') {
+      clearInterval(pollPrint);
+      try {
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+      } catch (printError) {
+        console.warn('Impression via iframe impossible', printError);
+      }
+      setTimeout(() => {
+        if (printFrame.parentNode) document.body.removeChild(printFrame);
+      }, 2000);
+    }
+  }, 150);
 }
+
 
 function toggleFavOnly() {
   favOnly = !favOnly;
@@ -894,7 +950,7 @@ async function runAIAssistant() {
       addCustomActivity(activity);
     });
 
-    if (Array.isArray(data.webResults) && data.webResults.length > 0 && actualResults.length === 0) {
+    if (Array.isArray(data.webResults) && data.webResults.length > 0) {
       showWebResults(data.webResults);
     } else {
       hideWebResults();
@@ -902,6 +958,7 @@ async function runAIAssistant() {
 
     const uniqueItemIds = Array.from(new Set(actualResults.map((item) => item.id)));
     searchResultIds = uniqueItemIds;
+    currentPage = 1;
 
     addSearchHistory(query);
     if (searchResultIds.length === 0) {
@@ -959,7 +1016,15 @@ async function generateColoringIA() {
 
     showResponse('Le coloriage IA n’a pas pu être généré. Essaie une autre description.', 'error');
   } catch (error) {
-    showResponse('Erreur lors de la génération du coloriage IA. Réessaie.', 'error');
+    const fallbackActivity = createFallbackActivity(query, 'coloring');
+    addCustomActivity(fallbackActivity);
+    selectedIds = [fallbackActivity.id];
+    saveSelectedItems();
+    searchResultIds = [fallbackActivity.id];
+    currentPage = 1;
+    renderGrid();
+    showResponse('Le coloriage IA a été généré localement en mode dégradé.', 'success');
+    setTimeout(() => printSelectedActivities(), 500);
   }
 }
 
