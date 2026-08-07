@@ -234,7 +234,7 @@ function renderProfileSelector() {
   container.innerHTML = `
     <label for="profileSelect"><strong>Profil :</strong></label>
     <select id="profileSelect" onchange="changeProfile(this.value)">
-      ${profiles.map((profile) => `<option value="${profile.id}" ${profile.id === currentProfile?.id ? 'selected' : ''}>${profile.name}</option>`).join('')}
+      ${profiles.map((profile) => `<option value="${profile.id}" ${profile.id === currentProfile?.id ? 'selected' : ''}>${escapeHtml(profile.name)}</option>`).join('')}
     </select>
     <button class="btn-outline" type="button" onclick="createProfile()">Nouveau profil</button>
   `;
@@ -365,6 +365,15 @@ function inferDifficulty(query) {
 
 function sanitizeSvgText(text = '') {
   return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeHtml(text = '') {
+  return String(text || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -635,10 +644,18 @@ function buildCardMarkup(item) {
   const isFavorite = favorites.includes(item.id);
   const isSelected = selectedIds.includes(item.id);
   const imageUrl = getImageUrlForItem(item);
+  const safeTitle = escapeHtml(item.title || '');
+  const safeDesc = escapeHtml(item.desc || '');
+  const safeObjective = escapeHtml(item.objective || '');
+  const safeDifficulty = escapeHtml(item.difficulty || '');
+  const safeCategory = escapeHtml(item.category || 'Activité');
+  const safeAge = escapeHtml(item.age || 'Tous âges');
+
   const imageMarkup = imageUrl
-    ? `<img class="card-img" src="${imageUrl}" alt="${item.title}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div class=\'card-img-fallback\'>${item.icon || '🎨'}</div>'">`
-    : `<div class="card-img">${item.icon || '🎨'}</div>`;
-  const queryBadgeMarkup = item.queryIcon ? `<div class="card-query"><span class="query-badge">${item.queryIcon}</span>${item.querySummary || 'Recherche IA'}</div>` : '';
+    ? `<img class="card-img" src="${imageUrl}" alt="${safeTitle}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div class=\\'card-img-fallback\\'>${escapeHtml(item.icon || '🎨')}</div>'">`
+    : `<div class="card-img">${escapeHtml(item.icon || '🎨')}</div>`;
+
+  const queryBadgeMarkup = item.queryIcon ? `<div class="card-query"><span class="query-badge">${escapeHtml(item.queryIcon)}</span>${escapeHtml(item.querySummary || 'Recherche IA')}</div>` : '';
 
   return `
     <article class="card ${isSelected ? 'selected-card' : ''}">
@@ -646,18 +663,18 @@ function buildCardMarkup(item) {
       ${imageMarkup}
       <div class="card-body">
         <div>
-          <h3>${item.title}</h3>
+          <h3>${safeTitle}</h3>
           ${queryBadgeMarkup}
-          <p>${item.desc || 'Activité à imprimer et à découvrir.'}</p>
-          ${item.difficulty ? `<p class="meta-line">Niveau : <strong>${item.difficulty}</strong></p>` : ''}
-          ${item.objective ? `<p class="meta-line">Objectif : ${item.objective}</p>` : ''}
+          <p>${safeDesc || 'Activité à imprimer et à découvrir.'}</p>
+          ${safeDifficulty ? `<p class="meta-line">Niveau : <strong>${safeDifficulty}</strong></p>` : ''}
+          ${safeObjective ? `<p class="meta-line">Objectif : ${safeObjective}</p>` : ''}
         </div>
         <div class="card-actions">
           <button class="btn-small ${isSelected ? 'selected' : ''}" onclick="toggleSelection(${item.id})">${isSelected ? '✅ Ajouté' : '➕ Ajouter'}</button>
         </div>
         <div class="card-tags">
-          <span class="tag">${item.category || 'Activité'}</span>
-          <span class="tag">${item.age || 'Tous âges'}</span>
+          <span class="tag">${safeCategory}</span>
+          <span class="tag">${safeAge}</span>
         </div>
       </div>
     </article>
@@ -725,21 +742,28 @@ function printSelectedActivities() {
 
   const content = selectedItems.map((item) => {
     const imageUrl = getImageUrlForItem(item);
+    const safeTitle = escapeHtml(item.title || '');
+    const safeDesc = escapeHtml(item.desc || '');
+    const safeCategory = escapeHtml(item.category || 'Activité');
+    const safeAge = escapeHtml(item.age || 'Tous âges');
+    const safeDifficulty = escapeHtml(item.difficulty || '');
+    const safeObjective = escapeHtml(item.objective || '');
+
     const imageBlock = imageUrl
-      ? `<img src="${imageUrl}" alt="${item.title}" class="print-image" onerror="this.style.display='none';">`
+      ? `<img src="${imageUrl}" alt="${safeTitle}" class="print-image" onerror="this.style.display='none';">`
       : '';
 
     return `
       <section class="print-card">
         <header>
-          <h2>${item.title}</h2>
-          <p class="print-category">${item.category || 'Activité'} • ${item.age || 'Tous âges'}</p>
+          <h2>${safeTitle}</h2>
+          <p class="print-category">${safeCategory} • ${safeAge}</p>
         </header>
         ${imageBlock}
-        <p class="print-description">${item.desc || 'Activité à imprimer.'}</p>
+        <p class="print-description">${safeDesc || 'Activité à imprimer.'}</p>
         <div class="print-meta">
-          ${item.difficulty ? `<span>Niveau : ${item.difficulty}</span>` : ''}
-          ${item.objective ? `<span>Objectif : ${item.objective}</span>` : ''}
+          ${safeDifficulty ? `<span>Niveau : ${safeDifficulty}</span>` : ''}
+          ${safeObjective ? `<span>Objectif : ${safeObjective}</span>` : ''}
         </div>
       </section>
     `;
@@ -823,7 +847,7 @@ function showResponse(message, type = 'info') {
   if (!responseBox) return;
   responseBox.style.display = 'block';
   responseBox.className = `status-message ${type}`;
-  responseBox.innerHTML = message;
+  responseBox.textContent = String(message || '');
 }
 
 function clearSearch() {
@@ -948,10 +972,10 @@ function showWebResults(results) {
       ${results.map((item) => `
         <div class="web-card">
           <div>
-            <h4>${item.title}</h4>
-            <p>${item.snippet}</p>
+            <h4>${escapeHtml(item.title)}</h4>
+            <p>${escapeHtml(item.snippet)}</p>
           </div>
-          <a href="${item.url}" target="_blank" rel="noopener noreferrer">Voir la ressource</a>
+          <a href="${encodeURI(item.url)}" target="_blank" rel="noopener noreferrer">Voir la ressource</a>
         </div>
       `).join('')}
     </div>
@@ -977,7 +1001,7 @@ function renderSearchHistory() {
     return;
   }
 
-  container.innerHTML = `<div class="history-label">Recherches récentes :</div>${searchHistory.map((item) => `<button class="history-chip" onclick="runHistorySearch('${item.replace(/'/g, "\\'")}')">${item}</button>`).join('')}`;
+  container.innerHTML = `<div class="history-label">Recherches récentes :</div>${searchHistory.map((item) => `<button class="history-chip" onclick='runHistorySearch(${JSON.stringify(item)})'>${escapeHtml(item)}</button>`).join('')}`;
 }
 
 function runHistorySearch(query) {
